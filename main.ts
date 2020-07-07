@@ -37,6 +37,8 @@ async function handleWs(sock: WebSocket) {
 }
 
 const port = Deno.args[0] || "8080";
+const connections = new Array<WebSocket>();
+
 async function main() {
     console.log(`websocket server is running on :${port}`);
     for await (const req of serve(`:${port}`)) {
@@ -49,9 +51,20 @@ async function main() {
         })
             .then(
                 async (ws: WebSocket): Promise<void> => {
+                    connections.push(ws);
                     console.log("Connection to websocket stablished");
+                    console.log(connections.length);
+
                     for await (const event of ws) {
                         console.log(event);
+                        if (typeof event === "string") {
+                            for (const webSocket of connections) {
+                                webSocket.send(event);
+                            }
+                        }
+                        if (isWebSocketCloseEvent(event)) {
+                            console.log("Websocket closed");
+                        }
                     }
                 }
             )
