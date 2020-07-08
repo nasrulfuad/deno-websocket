@@ -87,14 +87,16 @@
         ></script>
         <script>
             const ws = new WebSocket("ws://localhost:8081");
+            const usersJoinEl = document.getElementById("users-joined");
+
             ws.addEventListener("message", (event) => {
                 try {
                     const { type, message } = JSON.parse(event.data);
                     console.log(type, message);
                     if (type === "join") addUsersJoined(message.name);
-                    if (type === "online") {
+                    if (type === "online")
                         message.users.map((user) => addUsersJoined(user));
-                    }
+                    if (type === "left") removeUserOnline(message.name);
                 } catch (e) {
                     return false;
                 }
@@ -118,11 +120,20 @@
             }
 
             function addUsersJoined(name) {
-                const ul = document.getElementById("users-joined");
                 const li = document.createElement("li");
                 li.setAttribute("class", "list-group-item");
+                li.setAttribute("data", name);
                 li.innerHTML = `<span class="badge badge-success badge-pill mx-1 text-success">O</span>${name}`;
-                ul.appendChild(li);
+                usersJoinEl.appendChild(li);
+            }
+            function removeUserOnline(name) {
+                const lists = usersJoinEl.querySelectorAll("li");
+                console.log(lists[0].getAttribute("data"));
+                Array.from(lists).map((li) => {
+                    if (li.getAttribute("data") === name) {
+                        li.remove();
+                    }
+                });
             }
         </script>
     </body>

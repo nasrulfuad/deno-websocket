@@ -1,13 +1,8 @@
 import { serve } from "https://deno.land/std/http/server.ts";
-import {
-    acceptWebSocket,
-    isWebSocketCloseEvent,
-    acceptable,
-    WebSocket,
-} from "https://deno.land/std/ws/mod.ts";
+import { acceptWebSocket, acceptable } from "https://deno.land/std/ws/mod.ts";
+import { handleWebsocket } from "./WebSocket/index.ts";
 
 const port = Deno.args[0] || "8081";
-const connections = new Array<{ name: string; ws: WebSocket }>();
 
 async function main() {
     console.log(`websocket server is running on : http://localhost:${port}`);
@@ -36,50 +31,4 @@ async function main() {
     }
 }
 
-async function handleWebsocket(ws: WebSocket) {
-    for await (const event of ws) {
-        console.log(event);
-        if (typeof event === "string") {
-            const data = JSON.parse(event);
-            if (data.type === "register") {
-                connections.push({ name: data.name, ws });
-                const ev = JSON.stringify({
-                    type: "join",
-                    message: { name: data.name },
-                });
-                const onlineUsers = JSON.stringify({
-                    type: "online",
-                    message: {
-                        users: connections.map((connection) => connection.name),
-                    },
-                });
-                ws.send(onlineUsers);
-                broadcastEvents(ws, ev);
-            } else {
-                broadcastEvents(ws, event);
-            }
-        }
-        if (isWebSocketCloseEvent(event)) {
-            console.log("Websocket closed");
-            const currentConn = connections.filter(
-                (connection) => connection.ws == ws
-            );
-            if (currentConn) {
-                const data = JSON.stringify({
-                    type: "left",
-                    message: { name: currentConn[0].name },
-                });
-                broadcastEvents(ws, data);
-            }
-        }
-    }
-}
-
-function broadcastEvents(ws: WebSocket, event: string) {
-    for (const connection of connections) {
-        if (connection.ws !== ws) {
-            connection.ws.send(event);
-        }
-    }
-}
 main();
