@@ -6,11 +6,11 @@ import {
     WebSocket,
 } from "https://deno.land/std/ws/mod.ts";
 
-const port = Deno.args[0] || "8080";
+const port = Deno.args[0] || "8081";
 const connections = new Array<{ name: string; ws: WebSocket }>();
 
 async function main() {
-    console.log(`websocket server is running on :${port}`);
+    console.log(`websocket server is running on : http://localhost:${port}`);
     for await (const req of serve(`:${port}`)) {
         if (acceptable(req)) {
             const { conn, r: bufReader, w: bufWriter, headers } = req;
@@ -43,8 +43,13 @@ async function handleWebsocket(ws: WebSocket) {
         if (typeof event === "string") {
             const data = JSON.parse(event);
             if (data.type === "register") {
+                const ev = JSON.stringify({
+                    type: "join",
+                    message: { name: data.name },
+                });
                 connections.push({ name: data.name, ws });
                 ws.send(`${data.name}, you are registered!`);
+                broadcastEvents(ws, ev);
             } else {
                 broadcastEvents(ws, event);
             }

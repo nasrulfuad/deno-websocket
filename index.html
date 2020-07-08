@@ -34,6 +34,7 @@
                             Connect
                         </button>
                     </form>
+                    <ul class="list-group my-2" id="users-joined"></ul>
                     <form>
                         <div class="form-group">
                             <label for="message">Message</label>
@@ -66,8 +67,18 @@
             crossorigin="anonymous"
         ></script>
         <script>
-            const ws = new WebSocket("ws://localhost:8080");
-            ws.addEventListener("message", (event) => console.log(event.data));
+            const ws = new WebSocket("ws://localhost:8081");
+            ws.addEventListener("message", (event) => {
+                try {
+                    const { type, message } = JSON.parse(event.data);
+                    console.log(type, message);
+                    if (type === "join") {
+                        addUsersJoined(message.name);
+                    }
+                } catch (e) {
+                    return false;
+                }
+            });
             document
                 .getElementById("connect")
                 .addEventListener("click", handleConnect);
@@ -84,6 +95,14 @@
             function handleSend() {
                 const { value } = document.getElementById("message");
                 ws.send(value);
+            }
+
+            function addUsersJoined(name) {
+                const ul = document.getElementById("users-joined");
+                const li = document.createElement("li");
+                li.setAttribute("class", "list-group-item");
+                li.innerText = name;
+                ul.appendChild(li);
             }
         </script>
     </body>
