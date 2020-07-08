@@ -7,7 +7,7 @@ import {
 } from "https://deno.land/std/ws/mod.ts";
 
 const port = Deno.args[0] || "8080";
-const connections = new Array<WebSocket>();
+const connections = new Array<{ name: string; ws: WebSocket }>();
 
 async function main() {
     console.log(`websocket server is running on :${port}`);
@@ -37,12 +37,17 @@ async function main() {
 }
 
 async function handleWebsocket(ws: WebSocket) {
-    connections.push(ws);
-    console.log("Connection to websocket stablished");
+    console.log("Someone connected to websocket");
     for await (const event of ws) {
         console.log(event);
         if (typeof event === "string") {
-            broadcastEvents(ws, event);
+            const data = JSON.parse(event);
+            if (data.type === "register") {
+                connections.push({ name: data.name, ws });
+                ws.send(`${data.name}, you are registered!`);
+            } else {
+                broadcastEvents(ws, event);
+            }
         }
         if (isWebSocketCloseEvent(event)) {
             console.log("Websocket closed");
@@ -51,9 +56,9 @@ async function handleWebsocket(ws: WebSocket) {
 }
 
 function broadcastEvents(ws: WebSocket, event: string) {
-    for (const webSocket of connections) {
-        if (webSocket !== ws) {
-            webSocket.send(event);
+    for (const connection of connections) {
+        if (connection.ws !== ws) {
+            connection.ws.send(event);
         }
     }
 }
