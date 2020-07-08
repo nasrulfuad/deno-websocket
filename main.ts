@@ -37,18 +37,23 @@ async function main() {
 }
 
 async function handleWebsocket(ws: WebSocket) {
-    console.log("Someone connected to websocket");
     for await (const event of ws) {
         console.log(event);
         if (typeof event === "string") {
             const data = JSON.parse(event);
             if (data.type === "register") {
+                connections.push({ name: data.name, ws });
                 const ev = JSON.stringify({
                     type: "join",
                     message: { name: data.name },
                 });
-                connections.push({ name: data.name, ws });
-                ws.send(`${data.name}, you are registered!`);
+                const onlineUsers = JSON.stringify({
+                    type: "online",
+                    message: {
+                        users: connections.map((connection) => connection.name),
+                    },
+                });
+                ws.send(onlineUsers);
                 broadcastEvents(ws, ev);
             } else {
                 broadcastEvents(ws, event);

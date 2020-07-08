@@ -72,8 +72,9 @@
                 try {
                     const { type, message } = JSON.parse(event.data);
                     console.log(type, message);
-                    if (type === "join") {
-                        addUsersJoined(message.name);
+                    if (type === "join") addUsersJoined(message.name);
+                    if (type === "online") {
+                        message.users.map((user) => addUsersJoined(user));
                     }
                 } catch (e) {
                     return false;
