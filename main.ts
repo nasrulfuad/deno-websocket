@@ -2,39 +2,9 @@ import { serve } from "https://deno.land/std/http/server.ts";
 import {
     acceptWebSocket,
     isWebSocketCloseEvent,
-    isWebSocketPingEvent,
+    acceptable,
     WebSocket,
 } from "https://deno.land/std/ws/mod.ts";
-
-async function handleWs(sock: WebSocket) {
-    console.log("socket connected!");
-    try {
-        for await (const ev of sock) {
-            if (typeof ev === "string") {
-                // text message
-                console.log("ws:Text", ev);
-                await sock.send(ev);
-            } else if (ev instanceof Uint8Array) {
-                // binary message
-                console.log("ws:Binary", ev);
-            } else if (isWebSocketPingEvent(ev)) {
-                const [, body] = ev;
-                // ping
-                console.log("ws:Ping", body);
-            } else if (isWebSocketCloseEvent(ev)) {
-                // close
-                const { code, reason } = ev;
-                console.log("ws:Close", code, reason);
-            }
-        }
-    } catch (err) {
-        console.error(`failed to receive frame: ${err}`);
-
-        if (!sock.isClosed) {
-            await sock.close(1000).catch(console.error);
-        }
-    }
-}
 
 const port = Deno.args[0] || "8080";
 const connections = new Array<WebSocket>();
@@ -42,36 +12,49 @@ const connections = new Array<WebSocket>();
 async function main() {
     console.log(`websocket server is running on :${port}`);
     for await (const req of serve(`:${port}`)) {
-        const { conn, r: bufReader, w: bufWriter, headers } = req;
-        acceptWebSocket({
-            conn,
-            bufReader,
-            bufWriter,
-            headers,
-        })
-            .then(
-                async (ws: WebSocket): Promise<void> => {
-                    connections.push(ws);
-                    console.log("Connection to websocket stablished");
-                    console.log(connections.length);
+        if (acceptable(req)) {
+            const { conn, r: bufReader, w: bufWriter, headers } = req;
+            acceptWebSocket({
+                conn,
+                bufReader,
+                bufWriter,
+                headers,
+            }).then(handleWebsocket);
+        } else {
+            const { method, url } = req;
+            if (method === "GET" && url === "/") {
+                req.respond({
+                    headers: new Headers({
+                        "content-type": "text/html",
+                    }),
+                    body: await Deno.open("./index.html"),
+                });
+            } else {
+                req.respond({ body: "Not Found", status: 404 });
+            }
+        }
+    }
+}
 
-                    for await (const event of ws) {
-                        console.log(event);
-                        if (typeof event === "string") {
-                            for (const webSocket of connections) {
-                                webSocket.send(event);
-                            }
-                        }
-                        if (isWebSocketCloseEvent(event)) {
-                            console.log("Websocket closed");
-                        }
-                    }
-                }
-            )
-            .catch(async (err) => {
-                console.error(`failed to accept websocket: ${err}`);
-                await req.respond({ status: 400 });
-            });
+async function handleWebsocket(ws: WebSocket) {
+    connections.push(ws);
+    console.log("Connection to websocket stablished");
+    for await (const event of ws) {
+        console.log(event);
+        if (typeof event === "string") {
+            broadcastEvents(ws, event);
+        }
+        if (isWebSocketCloseEvent(event)) {
+            console.log("Websocket closed");
+        }
+    }
+}
+
+function broadcastEvents(ws: WebSocket, event: string) {
+    for (const webSocket of connections) {
+        if (webSocket !== ws) {
+            webSocket.send(event);
+        }
     }
 }
 main();
