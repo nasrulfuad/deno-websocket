@@ -61,6 +61,16 @@ async function handleWebsocket(ws: WebSocket) {
         }
         if (isWebSocketCloseEvent(event)) {
             console.log("Websocket closed");
+            const currentConn = connections.filter(
+                (connection) => connection.ws == ws
+            );
+            if (currentConn) {
+                const data = JSON.stringify({
+                    type: "left",
+                    message: { name: currentConn[0].name },
+                });
+                broadcastEvents(ws, data);
+            }
         }
     }
 }

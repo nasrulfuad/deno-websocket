@@ -11,43 +11,62 @@
     </head>
     <body>
         <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><h3>Chat App</h3></div>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <h3>Chat App</h3>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form class="w-50 mx-auto text-center">
+                                <div class="form-group text-left">
+                                    <label for="name">Name</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        class="form-control"
+                                        placeholder="Enter your name"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    id="connect"
+                                >
+                                    Connect
+                                </button>
+                            </form>
+                            <form>
+                                <div class="form-group">
+                                    <label for="message">Message</label>
+                                    <input
+                                        type="text"
+                                        id="message"
+                                        class="form-control"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    id="send"
+                                >
+                                    Send
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form class="w-50 mx-auto text-center">
-                        <div class="form-group text-left">
-                            <label for="name">Name</label>
-                            <input
-                                type="text"
-                                id="name"
-                                class="form-control"
-                                placeholder="Enter your name"
-                            />
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Online</h3>
                         </div>
-                        <button
-                            type="button"
-                            class="btn btn-primary"
-                            id="connect"
-                        >
-                            Connect
-                        </button>
-                    </form>
-                    <ul class="list-group my-2" id="users-joined"></ul>
-                    <form>
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <input
-                                type="text"
-                                id="message"
-                                class="form-control"
-                            />
+                        <div class="card-body">
+                            <ul class="list-group my-2" id="users-joined"></ul>
                         </div>
-                        <button type="button" class="btn btn-primary" id="send">
-                            Send
-                        </button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -102,7 +121,7 @@
                 const ul = document.getElementById("users-joined");
                 const li = document.createElement("li");
                 li.setAttribute("class", "list-group-item");
-                li.innerText = name;
+                li.innerHTML = `<span class="badge badge-success badge-pill mx-1 text-success">O</span>${name}`;
                 ul.appendChild(li);
             }
         </script>
