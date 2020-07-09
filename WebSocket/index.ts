@@ -15,6 +15,8 @@ export async function handleWebsocket(ws: WebSocket) {
             const data = JSON.parse(event);
             if (data.type === "register") {
                 handleRegister(connections, ws, data);
+            } else if (data.type === "message") {
+                broadcastEvents(ws, event);
             } else {
                 broadcastEvents(ws, event);
             }
@@ -63,7 +65,6 @@ function handleClose(ws: WebSocket, connections: Array<Connection>) {
     console.log("Websocket closed");
     const currentConn = connections.filter((connection) => connection.ws == ws);
     if (currentConn.length > 0) {
-        console.log(currentConn);
         const data = JSON.stringify({
             type: "left",
             message: { name: currentConn[0].name },
